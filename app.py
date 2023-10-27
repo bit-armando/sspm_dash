@@ -1,85 +1,29 @@
-from dash import Dash, dcc, html, Input, Output, callback, dash_table
+from dash import Dash, callback, Output, Input
 import dash_bootstrap_components as dbc
 import plotly.io as pio
-import plotly.express as px
+from plotly import express as px
 
-import pandas as pd
-import datetime
-
+import layout
 import utils.data as data
-import utils.graph as graph
+import utils.data_graph as data_graph
+
+df = data.convinar_dataframes('./data/')
+df = data.agregar_fecha(df)
 
 TEMPLATE_LIGHT = "plotly_white"
 TEMPLATE_DARK = "cyborg"
 
 pio.templates.default = TEMPLATE_LIGHT
 
-df = data.convinar_dataframes('./data/')
-df = data.agregar_fecha(df)
-now = datetime.datetime.now()
-
 external_stylesheets = [dbc.themes.BOOTSTRAP]
 app = Dash(__name__, external_stylesheets=external_stylesheets)
-
-# tab1_content = dbc.Card([
-#     dbc.CardBody([
-#         html.H3('Incidencia delictiva', className='card-title'),
-#         dcc.Checklist(
-#             id='age_incidencia',
-#             options=list(df['anio'].unique()),
-#             value=[now.year],
-#             inline=True,
-#             labelStyle={'display': 'inline-block'}
-#         ),
-#         dcc.Graph(id='total_graph')
-#     ]),
-    
-#     dbc.CardBody([
-#         html.H3('Incidencia delictiva por delito', className='card-title'),
-#         dcc.Checklist(
-#             id='age_delito',
-#             options=list(df['anio'].unique()),
-#             value=[now.year-1,now.year],
-#             inline=True,
-#             labelStyle={'display': 'inline-block'}
-#         ),
-#         dcc.Dropdown(
-#             id='delito',
-#             options=list(data.remover_null_delitos(df)),
-#             value='ABUSO SEXUAL'
-#         ),
-#         dcc.Graph(id='only_graph')
-#     ])
-# ])
-
-# tab2_content = dbc.Card([
-#     dbc.CardBody([
-#         html.H3('Incidencia delictiva por distrito', className='card-title'),
-#     ])
-# ])
-
-# tab3_content = dbc.Card([
-#     dbc.CardBody([
-#         html.H3('Mapas', className='card-title'),
-        
-#         dcc.Geolocation(id='geolocation'),
-        
-#     ])
-# ])
-
-# app.layout = html.Div([
-#     # Tabs
-#     dbc.Tabs([
-#         dbc.Tab(tab1_content , label='Incidencia delictiva por año', tab_id='tab-1'),
-#         dbc.Tab(tab2_content, label='Incidencia delictiva por distrito', tab_id='tab-2'),
-#         dbc.Tab(tab3_content, label='Mapas', tab_id='tab-3'),
-#     ]),
-# ])
+app.layout = layout.layout
 
 
+# Tab 1
 @callback(
-    Output('total_graph', 'figure'),
-    Input('age_incidencia', 'value')
+    Output('graph_tab1', 'figure'),
+    Input('age_tab1', 'value')
 )
 def graph_age(age):
     df_group = data.incidencia_delictiva(df)
@@ -93,11 +37,10 @@ def graph_age(age):
     fig.update_traces(textposition="bottom right")
     return fig
 
-
 @callback(
-    Output('only_graph', 'figure'),
-    Input('age_delito', 'value'),
-    Input('delito', 'value')
+    Output('graph_tab1-1', 'figure'),
+    Input('age_tab1-1', 'value'),
+    Input('delito_tab1-1', 'value')
 )
 def graph_delito(age, delito):
     df_group = data.incidencia_delictiva(df, ['mes', 'anio', 'id_Grupo'])
@@ -111,5 +54,55 @@ def graph_delito(age, delito):
     return fig
 
 
+# Tab 2
+@callback(
+    Output('output_tab2', 'children'),
+    Input('distrito_tab2', 'value')
+)
+def title_distrito(distrito):
+    return f'Incidencia delictiva por distrito: {distrito}'
+
+@callback(
+    Output('graph_tab2', 'figure'),
+    Input('age_tab2', 'value'),
+    Input('distrito_tab2', 'value'),
+    Input('delito_tab2', 'value')
+)
+def graph_distrito(age, distrito, delito):
+    df_group = data.incidencia_delictiva(df, ['descripcion', 'id_Grupo', 'anio', 'mes'])
+    mask = (df_group['anio'].isin(age) & df_group['descripcion'].isin([distrito]) & df_group['id_Grupo'].isin([delito]))
+    df_group = df_group[mask]
+    df_group = data.rellenar_meses_faltantes(df_group, age)
+    df_group = data.remplazar_meses(df_group)
+    
+    fig = px.line(df_group, x="mes", y="count", color='anio', text='count', markers=True)
+    fig.update_traces(textposition="bottom right")
+    return fig
+
+# Tab 3
+@callback(
+    Output('graph_tab3', 'figure'),
+    Input('age_tab3', 'value'),
+    # Input('distrito_tab3', 'value'),
+)
+def graph_map(age):    
+    distritos_df = data_graph.data_maps()
+    calles_df = data_graph.data_calles()
+    fig = px.choropleth_mapbox(distritos_df,
+                            geojson=distritos_df.geometry,
+                            locations=distritos_df.index,
+                            color=distritos_df.index,
+                            mapbox_style="open-street-map",
+                            zoom=9.3,
+                            center={"lat": 31.6, "lon": -106.48333},
+                            opacity=0.5,
+                            )
+    fig.update_geos(fitbounds="locations", visible=False)
+    fig.add_trace(px.scatter_mapbox(calles_df, lat='lat', lon='lon', hover_name='distrito', size_max=15).data[0])
+    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    return fig
+
 if __name__ == '__main__':
     app.run(debug=True)
+
+# mapas recomendados [open-street-map, carto-positron, stamen-terrain, ]

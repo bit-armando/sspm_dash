@@ -83,3 +83,9 @@ def incidencia_delictiva(df, columnas=['mes','anio']):
     df = agregar_fecha(df)
     df = df.groupby(columnas).size().reset_index(name='count')
     return df
+
+def incidencia_delictiva_por_mes(df, distrito, delito, anio, mes):
+    df = agregar_fecha(df)
+    grupo_df = df.groupby(['descripcion', 'id_Grupo', 'anio', 'mes']).size().reset_index(name='counts')
+    mask = (grupo_df['descripcion'] == distrito) & (grupo_df['id_Grupo'] == delito) & (grupo_df['anio'] == anio) & (grupo_df['mes'] == mes)
+    return grupo_df[mask]

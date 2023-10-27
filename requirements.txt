@@ -3,3 +3,8 @@ plotly
 dash
 dash-bootstrap-components
 dash-mantine-components
+geopandas
+matplotlib
+folium
+mapclassify
+contextily
