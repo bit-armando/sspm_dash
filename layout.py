@@ -78,7 +78,6 @@ tab2_content = dbc.Card([
             ]),
         ],width=3),
         dbc.Col([
-            html.H6(id='output_tab2'),
             dcc.Graph(id='graph_tab2')
         ])
     ]),
@@ -102,10 +101,13 @@ tab2_content = dbc.Card([
                 dcc.Dropdown(
                     id='Mes_tab2-2',
                     options=list(sorted(df['mes'].unique())),
-                    value='ENERO'
+                    value='1'
                 ),
             ]),
         ], width=3),
+        dbc.Col([
+            dcc.Graph(id='graph_tab2-2')
+        ])
     ])
 ], class_name='card')
 

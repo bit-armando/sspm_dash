@@ -2,6 +2,20 @@ import pandas as pd
 import os
 
 
+def agregar_fecha(df):
+    """Agrega las columnas de mes y año a un dataframe
+
+    Args:
+        df (DataFrame): Dataframe a agregar las columnas
+
+    Returns:
+        DataFrame: Dataframe con las columnas agregadas
+    """
+    df['id_fecha'] = pd.to_datetime(df['id_fecha'], format='%d/%m/%Y %H:%M:%S')
+    df['mes'] = df['id_fecha'].dt.month
+    df['anio'] = df['id_fecha'].dt.year
+    return df
+
 def convinar_dataframes(path):
     """Combina los archivos csv de un directorio en un solo dataframe
 
@@ -15,7 +29,9 @@ def convinar_dataframes(path):
     data_frames = []
     for archivo in archivos:
         data_frames.append(pd.read_csv(path + archivo, encoding='utf-8'))
-    return pd.concat(data_frames)
+    df = pd.concat(data_frames)
+    df = agregar_fecha(df)
+    return df
 
 def remover_null_delitos(df):
     """Remueve los valores nulos de la columna delito
@@ -32,19 +48,6 @@ def remover_null_delitos(df):
             lista.remove(i)
     return lista
 
-def agregar_fecha(df):
-    """Agrega las columnas de mes y año a un dataframe
-
-    Args:
-        df (DataFrame): Dataframe a agregar las columnas
-
-    Returns:
-        DataFrame: Dataframe con las columnas agregadas
-    """
-    df['id_fecha'] = pd.to_datetime(df['id_fecha'], format='%d/%m/%Y %H:%M:%S')
-    df['mes'] = df['id_fecha'].dt.month
-    df['anio'] = df['id_fecha'].dt.year
-    return df
 
 def rellenar_meses_faltantes(df, ages):
     for age in ages:
@@ -84,8 +87,18 @@ def incidencia_delictiva(df, columnas=['mes','anio']):
     df = df.groupby(columnas).size().reset_index(name='count')
     return df
 
-def incidencia_delictiva_por_mes(df, distrito, delito, anio, mes):
-    df = agregar_fecha(df)
-    grupo_df = df.groupby(['descripcion', 'id_Grupo', 'anio', 'mes']).size().reset_index(name='counts')
-    mask = (grupo_df['descripcion'] == distrito) & (grupo_df['id_Grupo'] == delito) & (grupo_df['anio'] == anio) & (grupo_df['mes'] == mes)
-    return grupo_df[mask]
+# def agregar_distritos(df, ages):
+#     distritos = {
+#         1:'UNEVID', 2:'PONIENTE', 3:'SUR', 4:'UNIVERSIDAD', 5:'VALLE', 6:'CENTRO',
+#             7:'POLICIA COMERCIAL', 8:'ORIENTE', 9:'RIVERAS', 10:'GOE',
+#             11:'COM. ESPECIALES', 12:'CANINA', 13:'ALCAIDIA', 14:'OPERATIVO BLOCK',
+#             15:'INTELIGENCIA'
+#     }
+#     for age in ages:
+#         for i in range(1,16):
+#             try:
+#                 df[(df.anio == age) & (df.descripcion == distritos[i])].iloc[0]
+#             except:
+#                 fila = pd.DataFrame({'descripcion': distritos[i], 'id_Grupo': None, 'anio': age, 'mes': None, 'count': 0})
+#                 df = pd.concat([df, fila], ignore_index=True)
+#     return df

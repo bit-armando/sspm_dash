@@ -56,13 +56,6 @@ def graph_delito(age, delito):
 
 # Tab 2
 @callback(
-    Output('output_tab2', 'children'),
-    Input('distrito_tab2', 'value')
-)
-def title_distrito(distrito):
-    return f'Incidencia delictiva por distrito: {distrito}'
-
-@callback(
     Output('graph_tab2', 'figure'),
     Input('age_tab2', 'value'),
     Input('distrito_tab2', 'value'),
@@ -79,11 +72,25 @@ def graph_distrito(age, distrito, delito):
     fig.update_traces(textposition="bottom right")
     return fig
 
+@callback(
+    Output('graph_tab2-2', 'figure'),
+    Input('age_tab2-2', 'value'),
+    Input('delito_tab2-2', 'value'),
+    Input('Mes_tab2-2', 'value')
+)
+def graph_mes(anio, delito, mes):
+    grupo_df = df.groupby(['descripcion', 'id_Grupo', 'anio', 'mes']).size().reset_index(name='counts')
+    mask = (grupo_df['anio'].isin(anio)) & (grupo_df['id_Grupo'].isin([delito])) & (grupo_df['mes'].isin([mes]))
+    grupo_df = grupo_df[mask]
+    # grupo_df = data.agregar_distritos(grupo_df, anio)
+    
+    fig = px.line(grupo_df, x='descripcion', y='counts', color='anio', text='counts', markers=True)
+    fig.update_traces(textposition="bottom right")
+    return fig
 # Tab 3
 @callback(
     Output('graph_tab3', 'figure'),
     Input('age_tab3', 'value'),
-    # Input('distrito_tab3', 'value'),
 )
 def graph_map(age):    
     distritos_df = data_graph.data_maps()
@@ -94,13 +101,13 @@ def graph_map(age):
                             color=distritos_df.index,
                             mapbox_style="open-street-map",
                             zoom=9.3,
-                            center={"lat": 31.6, "lon": -106.48333},
-                            opacity=0.5,
+                            center={"lat": 31.6, "lon": -106.48333},                            opacity=0.5,
                             )
     fig.update_geos(fitbounds="locations", visible=False)
     fig.add_trace(px.scatter_mapbox(calles_df, lat='lat', lon='lon', hover_name='distrito', size_max=15).data[0])
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
     return fig
+
 
 if __name__ == '__main__':
     app.run(debug=True)
