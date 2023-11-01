@@ -26,6 +26,23 @@ def get_sectores(fig, distrito):
                 showlegend=False
             ))
 
-def data_calles():
-    return pd.read_csv('./data_group/locations.csv')
-
+def get_calles(fig, distrito):
+    df = pd.read_csv('./data_group/locations.csv', index_col=0)
+    mask = df['distrito'].isin([distrito])
+    df = df[mask]
+    lat = df['lat'].values
+    lon = df['lon'].values
+    
+    fig.add_trace(
+        go.Scattermapbox(
+            lat=lat,
+            lon=lon,
+            mode='markers',
+            marker=go.scattermapbox.Marker(
+                size=5,
+                color='blue',
+                opacity=0.5
+            ),
+            showlegend=False
+        )
+    )

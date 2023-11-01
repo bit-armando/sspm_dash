@@ -109,36 +109,8 @@ def graph_map(age, sectores):
     
     for sector in sectores:
         data_graph.get_sectores(fig, sector)
+        data_graph.get_calles(fig, sector)
     
-    # fig.add_trace(
-    #     go.Scattermapbox(
-    #         lat=calles_df['lat'],
-    #         lon=calles_df['lon'],
-    #         mode='markers',
-    #         marker=go.scattermapbox.Marker(
-    #             size=5,
-    #             color='blue',
-    #             opacity=0.5
-    #         ),
-    #         showlegend=False
-    #     )
-    # )
-    
-    # geojson = data_graph.get_sectores()
-    
-    # for feature in geojson['features']:
-    #     # Extrae las coordenadas de los límites
-    #     coords = feature['geometry']['coordinates'][0]
-    #     lats, lons = zip(*coords)
-
-    #     # Agrega las trazas de los límites al gráfico
-    #     fig.add_trace(go.Scattermapbox(
-    #         lat=lats,
-    #         lon=lons,
-    #         mode='lines',
-    #         line=dict(width=1, color='red'),
-    #         visible=True,
-    #     ))
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
     return fig
 
