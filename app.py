@@ -96,8 +96,7 @@ def graph_mes(anio, delito, mes):
     Input('sectores_tab3', 'value'),
 )
 def graph_map(age, sectores):    
-    distritos_df = data_graph.data_maps()
-    # calles_df = data_graph.get_sectores()
+    distritos_df = data_graph.get_distritos()
     fig = px.choropleth_mapbox(distritos_df,
                             geojson=distritos_df.geometry,
                             locations=sectores,
@@ -107,8 +106,9 @@ def graph_map(age, sectores):
                             center={"lat": 31.6, "lon": -106.48333},    
                             opacity=0.5,
                             )
-    if 'RIVERAS' in sectores:
-        print('holi')
+    
+    for sector in sectores:
+        data_graph.get_sectores(fig, sector)
     
     # fig.add_trace(
     #     go.Scattermapbox(
@@ -139,7 +139,6 @@ def graph_map(age, sectores):
     #         line=dict(width=1, color='red'),
     #         visible=True,
     #     ))
-    
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
     return fig
 
