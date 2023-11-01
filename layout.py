@@ -2,12 +2,15 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 import datetime
+import os
 
 import utils.data as data
 
-df = data.convinar_dataframes('./data/')
-df = data.agregar_fecha(df)
+df = data.convinar_dataframes([2022,2023])
 now = datetime.datetime.now()
+
+age = [x for x in os.listdir('./data/')]
+age = [int(x.replace('.csv', '')) for x in age]
 
 tab1_content = dbc.Card([
     dbc.Row([
@@ -17,7 +20,7 @@ tab1_content = dbc.Card([
                 
                 dcc.Checklist(
                     id='age_tab1',
-                    options=list(df['anio'].unique()),
+                    options=age,
                     value=[now.year],
                     inline=True,
                     labelStyle={'display': 'inline-block'},
@@ -38,7 +41,7 @@ tab1_content = dbc.Card([
             dbc.Col(html.H1('Incidencia delictiva por delito', className='text-center text-secondary')),
             dcc.Checklist(
                 id='age_tab1-1',
-                options=list(df['anio'].unique()),
+                options=age,
                 value=[now.year-1,now.year],
                 inline=True,
                 labelStyle={'display': 'inline-block'}
@@ -60,7 +63,7 @@ tab2_content = dbc.Card([
                 html.H1('Incidencia delictiva por distrito', className='text-center text-secondary'),
                 dcc.Checklist(
                     id='age_tab2',
-                    options=list(df['anio'].unique()),
+                    options=age,
                     value=[now.year],
                     inline=True,
                     labelStyle={'display': 'inline-block'}
@@ -88,7 +91,7 @@ tab2_content = dbc.Card([
                 html.H1('Incidencia delictiva por mes', className='text-center text-secondary'),
                 dcc.Checklist(
                     id='age_tab2-2',
-                    options=list(df['anio'].unique()),
+                    options=age,
                     value=[now.year],
                     inline=True,
                     labelStyle={'display': 'inline-block'}
@@ -100,7 +103,7 @@ tab2_content = dbc.Card([
                 ),
                 dcc.Dropdown(
                     id='Mes_tab2-2',
-                    options=list(sorted(df['mes'].unique())),
+                    options=list(sorted(df['id_fecha'].dt.month.unique())),
                     value='1'
                 ),
             ]),
@@ -111,15 +114,24 @@ tab2_content = dbc.Card([
     ])
 ], class_name='card')
 
+distritos = ['CENTRO', 'UNIVERSIDAD', 'ORIENTE', 'VALLE', 'PONIENTE', 'SUR', 'RIVERAS']
+
 tab3_content = dbc.Card([
     dbc.CardBody([
         html.H3('Mapas', className='card-title'),
         dcc.Checklist(
             id='age_tab3',
-            options=list(df['anio'].unique()),
+            options=age,
             value=[now.year],
             inline=True,
             labelStyle={'display': 'inline-block'}
+        ),
+        
+        dcc.Dropdown(
+            id='sectores_tab3',
+            options=distritos,
+            value=distritos,
+            multi=True
         ),
         dcc.Graph(id='graph_tab3'),
         

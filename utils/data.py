@@ -1,37 +1,29 @@
 import pandas as pd
 import os
 
-
-def agregar_fecha(df):
-    """Agrega las columnas de mes y año a un dataframe
+def convinar_dataframes(ages):
+    """
+    Combines multiple CSV files into a single Pandas DataFrame.
 
     Args:
-        df (DataFrame): Dataframe a agregar las columnas
+        ages (list): A list of integers representing the ages of the individuals whose data is being combined.
 
     Returns:
-        DataFrame: Dataframe con las columnas agregadas
+        pandas.DataFrame: A DataFrame containing the combined data from all CSV files.
+
+    Raises:
+        FileNotFoundError: If any of the CSV files specified in `ages` cannot be found in the `./data/` directory.
+
     """
-    df['id_fecha'] = pd.to_datetime(df['id_fecha'], format='%d/%m/%Y %H:%M:%S')
-    df['mes'] = df['id_fecha'].dt.month
-    df['anio'] = df['id_fecha'].dt.year
-    return df
-
-def convinar_dataframes(path):
-    """Combina los archivos csv de un directorio en un solo dataframe
-
-    Args:
-        path (str): Ruta del directorio
-
-    Returns:
-        DataFrame: Dataframe con los datos de los archivos csv del directorio
-    """
+    path = './data/'
     archivos = os.listdir(path)
-    data_frames = []
-    for archivo in archivos:
-        data_frames.append(pd.read_csv(path + archivo, encoding='utf-8'))
+    data_frames = [pd.read_csv(path + str(age) + '.csv', encoding='utf-8') for age in ages if str(age)+'.csv' in archivos]
     df = pd.concat(data_frames)
-    df = agregar_fecha(df)
+    df['id_fecha'] = pd.to_datetime(df['id_fecha'], format='%d/%m/%Y %H:%M:%S')
+    df['anio'] = df['id_fecha'].dt.year
+    df['mes'] = df['id_fecha'].dt.month
     return df
+    
 
 def remover_null_delitos(df):
     """Remueve los valores nulos de la columna delito
@@ -53,7 +45,7 @@ def rellenar_meses_faltantes(df, ages):
     for age in ages:
         for mes in range(1, 13):
             try:
-                df[(df.anio == age) & (df.mes == mes)].iloc[0]
+                df[(df['anio'] == age) & (df['mes'] == mes)].iloc[0]
             except:
                 fila = pd.DataFrame({'anio': [age], 'mes': [mes], 'id_Grupo': None, 'count': [0]})
                 df = pd.concat([df, fila], ignore_index=True)
@@ -81,24 +73,7 @@ def incidencia_delictiva(df, columnas=['mes','anio']):
     Returns:
         DataFrame: Dataframe agrupado
     """
-
-    
-    df = agregar_fecha(df)
     df = df.groupby(columnas).size().reset_index(name='count')
     return df
 
-# def agregar_distritos(df, ages):
-#     distritos = {
-#         1:'UNEVID', 2:'PONIENTE', 3:'SUR', 4:'UNIVERSIDAD', 5:'VALLE', 6:'CENTRO',
-#             7:'POLICIA COMERCIAL', 8:'ORIENTE', 9:'RIVERAS', 10:'GOE',
-#             11:'COM. ESPECIALES', 12:'CANINA', 13:'ALCAIDIA', 14:'OPERATIVO BLOCK',
-#             15:'INTELIGENCIA'
-#     }
-#     for age in ages:
-#         for i in range(1,16):
-#             try:
-#                 df[(df.anio == age) & (df.descripcion == distritos[i])].iloc[0]
-#             except:
-#                 fila = pd.DataFrame({'descripcion': distritos[i], 'id_Grupo': None, 'anio': age, 'mes': None, 'count': 0})
-#                 df = pd.concat([df, fila], ignore_index=True)
-#     return df
+

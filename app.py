@@ -2,13 +2,11 @@ from dash import Dash, callback, Output, Input
 import dash_bootstrap_components as dbc
 import plotly.io as pio
 from plotly import express as px
+import plotly.graph_objs as go
 
 import layout
 import utils.data as data
 import utils.data_graph as data_graph
-
-df = data.convinar_dataframes('./data/')
-df = data.agregar_fecha(df)
 
 TEMPLATE_LIGHT = "plotly_white"
 TEMPLATE_DARK = "cyborg"
@@ -26,6 +24,7 @@ app.layout = layout.layout
     Input('age_tab1', 'value')
 )
 def graph_age(age):
+    df = data.convinar_dataframes(age)
     df_group = data.incidencia_delictiva(df)
     mask = df_group['anio'].isin(age)
     df_group = df_group[mask]
@@ -43,6 +42,7 @@ def graph_age(age):
     Input('delito_tab1-1', 'value')
 )
 def graph_delito(age, delito):
+    df = data.convinar_dataframes(age)
     df_group = data.incidencia_delictiva(df, ['mes', 'anio', 'id_Grupo'])
     mask = (df_group['anio'].isin(age) & df_group['id_Grupo'].isin([delito]))
     df_group = df_group[mask]
@@ -62,6 +62,7 @@ def graph_delito(age, delito):
     Input('delito_tab2', 'value')
 )
 def graph_distrito(age, distrito, delito):
+    df = data.convinar_dataframes(age)
     df_group = data.incidencia_delictiva(df, ['descripcion', 'id_Grupo', 'anio', 'mes'])
     mask = (df_group['anio'].isin(age) & df_group['descripcion'].isin([distrito]) & df_group['id_Grupo'].isin([delito]))
     df_group = df_group[mask]
@@ -79,6 +80,7 @@ def graph_distrito(age, distrito, delito):
     Input('Mes_tab2-2', 'value')
 )
 def graph_mes(anio, delito, mes):
+    df = data.convinar_dataframes(anio)
     grupo_df = df.groupby(['descripcion', 'id_Grupo', 'anio', 'mes']).size().reset_index(name='counts')
     mask = (grupo_df['anio'].isin(anio)) & (grupo_df['id_Grupo'].isin([delito])) & (grupo_df['mes'].isin([mes]))
     grupo_df = grupo_df[mask]
@@ -91,25 +93,56 @@ def graph_mes(anio, delito, mes):
 @callback(
     Output('graph_tab3', 'figure'),
     Input('age_tab3', 'value'),
+    Input('sectores_tab3', 'value'),
 )
-def graph_map(age):    
+def graph_map(age, sectores):    
     distritos_df = data_graph.data_maps()
-    calles_df = data_graph.data_calles()
+    # calles_df = data_graph.get_sectores()
     fig = px.choropleth_mapbox(distritos_df,
                             geojson=distritos_df.geometry,
-                            locations=distritos_df.index,
-                            color=distritos_df.index,
+                            locations=sectores,
+                            color=sectores,
                             mapbox_style="open-street-map",
                             zoom=9.3,
-                            center={"lat": 31.6, "lon": -106.48333},                            opacity=0.5,
+                            center={"lat": 31.6, "lon": -106.48333},    
+                            opacity=0.5,
                             )
-    fig.update_geos(fitbounds="locations", visible=False)
-    fig.add_trace(px.scatter_mapbox(calles_df, lat='lat', lon='lon', hover_name='distrito', size_max=15).data[0])
+    if 'RIVERAS' in sectores:
+        print('holi')
+    
+    # fig.add_trace(
+    #     go.Scattermapbox(
+    #         lat=calles_df['lat'],
+    #         lon=calles_df['lon'],
+    #         mode='markers',
+    #         marker=go.scattermapbox.Marker(
+    #             size=5,
+    #             color='blue',
+    #             opacity=0.5
+    #         ),
+    #         showlegend=False
+    #     )
+    # )
+    
+    # geojson = data_graph.get_sectores()
+    
+    # for feature in geojson['features']:
+    #     # Extrae las coordenadas de los límites
+    #     coords = feature['geometry']['coordinates'][0]
+    #     lats, lons = zip(*coords)
+
+    #     # Agrega las trazas de los límites al gráfico
+    #     fig.add_trace(go.Scattermapbox(
+    #         lat=lats,
+    #         lon=lons,
+    #         mode='lines',
+    #         line=dict(width=1, color='red'),
+    #         visible=True,
+    #     ))
+    
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
     return fig
 
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-# mapas recomendados [open-street-map, carto-positron, stamen-terrain, ]
