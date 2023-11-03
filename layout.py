@@ -21,7 +21,7 @@ tab1_content = dbc.Card([
                 dcc.Checklist(
                     id='age_tab1',
                     options=age,
-                    value=[now.year],
+                    value=[now.year, now.year-1],
                     inline=True,
                     labelStyle={'display': 'inline-block'},
                     className='list-group-item'
@@ -48,7 +48,8 @@ tab1_content = dbc.Card([
             ),
             dcc.Dropdown(
                 id='delito_tab1-1',
-                options=list(data.remover_null_delitos(df)),
+                # options=list(data.remover_null_delitos(df)),
+                options=df['id_Grupo'].unique(),
                 value='ABUSO SEXUAL'
             ),
             dcc.Graph(id='graph_tab1-1')
@@ -64,7 +65,7 @@ tab2_content = dbc.Card([
                 dcc.Checklist(
                     id='age_tab2',
                     options=age,
-                    value=[now.year],
+                    value=[now.year, now.year-1],
                     inline=True,
                     labelStyle={'display': 'inline-block'}
                 ),
@@ -75,8 +76,8 @@ tab2_content = dbc.Card([
                 ),
                 dcc.Dropdown(
                     id='delito_tab2',
-                    options=list(data.remover_null_delitos(df)),
-                    value='ABUSO SEXUAL'
+                    options=df['id_Grupo'].unique(),
+                    value='ARMAS DECOMISADAS'
                 ),
             ]),
         ],width=3),
@@ -92,19 +93,19 @@ tab2_content = dbc.Card([
                 dcc.Checklist(
                     id='age_tab2-2',
                     options=age,
-                    value=[now.year],
+                    value=[now.year, now.year-1],
                     inline=True,
                     labelStyle={'display': 'inline-block'}
                 ),
                 dcc.Dropdown(
                     id='delito_tab2-2',
-                    options=list(data.remover_null_delitos(df)),
-                    value='ABUSO SEXUAL'
+                    options=df['id_Grupo'].unique(),
+                    value='ARMAS DECOMISADAS'
                 ),
                 dcc.Dropdown(
                     id='Mes_tab2-2',
                     options=list(sorted(df['id_fecha'].dt.month.unique())),
-                    value='1'
+                    value=now.month
                 ),
             ]),
         ], width=3),
@@ -119,10 +120,10 @@ distritos = ['CENTRO', 'UNIVERSIDAD', 'ORIENTE', 'VALLE', 'PONIENTE', 'SUR', 'RI
 tab3_content = dbc.Card([
     dbc.CardBody([
         html.H3('Mapas', className='card-title'),
-        dcc.Checklist(
+        dcc.RadioItems(
             id='age_tab3',
             options=age,
-            value=[now.year],
+            value=now.year,
             inline=True,
             labelStyle={'display': 'inline-block'}
         ),
@@ -130,7 +131,7 @@ tab3_content = dbc.Card([
         dcc.Dropdown(
             id='sectores_tab3',
             options=distritos,
-            value=distritos,
+            value=['SUR'],
             multi=True
         ),
         dcc.Graph(id='graph_tab3'),

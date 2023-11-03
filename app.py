@@ -33,6 +33,9 @@ def graph_age(age):
     
     # import pdb; pdb.set_trace()
     fig = px.line(df_group, x="mes", y="count", color='anio',text='count', markers=True)
+    fig.update_layout(
+        title_text='INCIDENCIA DELICTIVA '+str(age),
+    )
     fig.update_traces(textposition="bottom right")
     return fig
 
@@ -50,6 +53,9 @@ def graph_delito(age, delito):
     df_group = data.remplazar_meses(df_group)
     
     fig = px.line(df_group, x="mes", y="count", color='anio', text='count', markers=True)
+    fig.update_layout(
+        title_text=delito+' '+str(age),
+    )
     fig.update_traces(textposition="bottom right")
     return fig
 
@@ -70,6 +76,9 @@ def graph_distrito(age, distrito, delito):
     df_group = data.remplazar_meses(df_group)
     
     fig = px.line(df_group, x="mes", y="count", color='anio', text='count', markers=True)
+    fig.update_layout(
+        title_text=delito+' EN '+distrito+' '+str(age),
+    )
     fig.update_traces(textposition="bottom right")
     return fig
 
@@ -80,13 +89,21 @@ def graph_distrito(age, distrito, delito):
     Input('Mes_tab2-2', 'value')
 )
 def graph_mes(anio, delito, mes):
+    meses = {
+        1: 'ENERO', 2: 'FEBRERO', 3: 'MARZO', 4: 'ABRIL', 5: 'MAYO', 6: 'JUNIO', 
+        7: 'JULIO', 8: 'AGOSTO', 9: 'SEPTIEMBRE', 10: 'OCTUBRE', 
+        11: 'NOVIEMBRE', 12: 'DICIEMBRE'
+    }
+    
     df = data.convinar_dataframes(anio)
-    grupo_df = df.groupby(['descripcion', 'id_Grupo', 'anio', 'mes']).size().reset_index(name='counts')
-    mask = (grupo_df['anio'].isin(anio)) & (grupo_df['id_Grupo'].isin([delito])) & (grupo_df['mes'].isin([mes]))
-    grupo_df = grupo_df[mask]
-    # grupo_df = data.agregar_distritos(grupo_df, anio)
+    mask = (df['anio'].isin(anio)) & (df['id_Grupo'].isin([delito])) & (df['mes'].isin([mes]))
+    grupo_df = df[mask]
+    grupo_df = data.agregar_divisiones(grupo_df, anio)
     
     fig = px.line(grupo_df, x='descripcion', y='counts', color='anio', text='counts', markers=True)
+    fig.update_layout(
+        title_text=delito+' EN '+meses[mes]+' '+str(anio),
+    )
     fig.update_traces(textposition="bottom right")
     return fig
 # Tab 3
@@ -97,6 +114,7 @@ def graph_mes(anio, delito, mes):
 )
 def graph_map(age, sectores):    
     distritos_df = data_graph.get_distritos()
+    
     fig = px.choropleth_mapbox(distritos_df,
                             geojson=distritos_df.geometry,
                             locations=sectores,
@@ -104,14 +122,19 @@ def graph_map(age, sectores):
                             mapbox_style="open-street-map",
                             zoom=9.3,
                             center={"lat": 31.6, "lon": -106.48333},    
-                            opacity=0.5,
+                            opacity=0.3,
                             )
     
     for sector in sectores:
         data_graph.get_sectores(fig, sector)
         data_graph.get_calles(fig, sector)
     
-    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    fig.update_layout(
+        autosize=True,
+        hovermode='closest',
+        margin=dict(l=0, r=0, t=0, b=0),
+        height=600,
+    )
     return fig
 
 

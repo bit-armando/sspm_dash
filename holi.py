@@ -1,18 +1,27 @@
 import plotly.graph_objects as go
-import geopandas as gpd
 
-# Suponiendo que 'a' es un GeoDataFrame de GeoPandas
-a = gpd.read_file('./sectores.geojson')
-boundaries = a['geometry'].boundary
+fig = go.Figure(go.Scattermapbox(
+    lat=['45.5017'],
+    lon=['-73.5673'],
+    mode='markers',
+    marker=go.scattermapbox.Marker(
+        size=14
+    ),
+    text=["Texto de ejemplo"],  # Aquí es donde agregas el texto
+))
 
-# Crear una figura vacía
-fig = go.Figure()
-
-# Añadir una traza para cada límite
-for boundary in boundaries:
-    # Extraer las coordenadas x e y
-    x, y = boundary.xy
-    # Añadir la traza
-    fig = go.Scatter(x=x, y=y, mode='lines')
+fig.update_layout(
+    autosize=True,
+    hovermode='closest',
+    mapbox=dict(
+        bearing=0,
+        center=dict(
+            lat=45,
+            lon=-73
+        ),
+        pitch=0,
+        zoom=10
+    ),
+)
 
 fig.show()

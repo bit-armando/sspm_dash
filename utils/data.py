@@ -36,8 +36,8 @@ def remover_null_delitos(df):
     """
     lista = list(df['id_Grupo'].unique())
     for i in lista:
-        if i != str:
-            lista.remove(i)
+        if i == None:
+            print(type(i))
     return lista
 
 
@@ -77,3 +77,18 @@ def incidencia_delictiva(df, columnas=['mes','anio']):
     return df
 
 
+def agregar_divisiones(df, ages):
+    diviciones = ['ORIENTE', 'PONIENTE', 'CENTRO', 'RIVERAS', 'VALLE', 'SUR',
+       'UNIVERSIDAD', 'POLICIA COMERCIAL', 'UNEVID', 'GOE', 'CANINA',
+       'COM. ESPECIALES', 'OPERATIVO BLOCK', 'INTELIGENCIA', 'ALCAIDIA']
+    
+    grupo_df = df.groupby(['anio', 'mes', 'descripcion']).size().reset_index(name='counts')
+    
+    for age in ages:
+        a = grupo_df[grupo_df['anio'] == age]
+        for i in diviciones:
+            if i not in a['descripcion'].unique():
+                data = pd.DataFrame({'anio': age, 'mes': 5, 'descripcion': i, 'counts': 0}, index=[0])
+                grupo_df = pd.concat([grupo_df, data], ignore_index=True)
+                
+    return grupo_df.sort_values(by=['anio', 'descripcion'])
