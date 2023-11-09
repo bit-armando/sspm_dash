@@ -1,6 +1,7 @@
 import pandas as pd
 import geopandas as gpd
 import plotly.graph_objs as go
+import plotly.express as px
 
 def get_distritos():
     df = gpd.read_file('./distritos.geojson')
@@ -11,23 +12,25 @@ def get_sectores(fig, distrito):
     # Lee el archivo geojson y lo filtra por distrito
     geo_df = gpd.read_file('./sectores.geojson')
     mask = geo_df['Distrito'].isin([distrito])
-    geo_df = geo_df[mask]
+    geo_df = geo_df[mask] 
 
     # Agrega los sectores al mapa
     boundaries = geo_df['geometry'].boundary.values
     coords = [list(boundary.coords) for boundary in boundaries]
-    
-    for line in coords:
+
+    for coord in coords:
         fig.add_trace(go.Scattermapbox(
-                lat=[coord[1] for coord in line],
-                lon=[coord[0] for coord in line],
+                lat=[coord[1] for coord in coord],
+                lon=[coord[0] for coord in coord],
                 mode='lines',
                 line=dict(width=1, color='black'),
                 showlegend=False,
                 ))
-    
+
+
     # Agrega el numero del sector al mapa
-    for centroide, distrito in zip(geo_df['geometry'].centroid, geo_df['Sector'].values):        
+    for centroide, distrito in zip(geo_df['geometry'], geo_df['Sector']):  
+        centroide = centroide.centroid      
         fig.add_trace(go.Scattermapbox(
                 lat=[centroide.y],
                 lon=[centroide.x],
@@ -41,20 +44,21 @@ def get_sectores(fig, distrito):
             ))
 
 def get_calles(fig, distrito):
-    df = pd.read_csv('./data_group/locations.csv', index_col=0)
-    mask = df['distrito'].isin([distrito])
+    df = pd.read_csv('data_group/locations.csv')
+    mask = df['descripcion'].isin([distrito])
     df = df[mask]
 
     fig.add_trace(
         go.Scattermapbox(
-            lat=df['lat'],
-            lon=df['lon'],
+            lat=df['y'],
+            lon=df['x'],
             mode='markers',
             marker=go.scattermapbox.Marker(
-                size=5,
+                size=6,
                 opacity=0.5,
-                color='red'
+                color=df['color']
             ),
-            showlegend=False
+            # showlegend=False
         )
     )
+    

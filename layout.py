@@ -129,6 +129,12 @@ tab3_content = dbc.Card([
         ),
         
         dcc.Dropdown(
+            id='delito_tab3',
+            options=df['id_Grupo'].unique(),
+            value='ARMAS DECOMISADAS'
+        ),
+        
+        dcc.Dropdown(
             id='sectores_tab3',
             options=distritos,
             value=['SUR'],
