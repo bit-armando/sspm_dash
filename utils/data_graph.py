@@ -43,9 +43,9 @@ def get_sectores(fig, distrito):
                 showlegend=False
             ))
 
-def get_calles(fig, distrito):
+def get_calles(fig, delito, sectores):
     df = pd.read_csv('data_group/locations.csv')
-    mask = df['descripcion'].isin([distrito])
+    mask = (df['id_Grupo'].isin([delito])) & (df['descripcion'].isin(sectores))
     df = df[mask]
 
     fig.add_trace(
@@ -53,12 +53,18 @@ def get_calles(fig, distrito):
             lat=df['y'],
             lon=df['x'],
             mode='markers',
+            hoverlabel=dict(
+                bgcolor="white",
+                font_size=15,
+                font_family="Rockwell"
+            ),
+            hovertemplate=delito,
+            texttemplate=delito,
             marker=go.scattermapbox.Marker(
-                size=6,
-                opacity=0.5,
+                size=10,
                 color=df['color']
             ),
-            # showlegend=False
+            name=delito,
         )
     )
     

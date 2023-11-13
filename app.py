@@ -134,53 +134,41 @@ def graph_mes(anio, delito, mes):
 def graph_map(age, sectores, delito):    
     distritos_df = data_graph.get_distritos()
     
+    if delito is str:
+        aux = [delito]
+    else:
+        aux = delito
+    
     fig = px.choropleth_mapbox(distritos_df,
                             geojson=distritos_df.geometry,
                             locations=sectores,
                             color=sectores,
                             color_discrete_map={
-                                'ORIENTE': 'blue',
-                                'PONIENTE': 'red',
-                                'CENTRO': 'green',
-                                'RIVERAS': 'yellow',
-                                'VALLE': 'purple',
-                                'SUR': 'orange',
-                                'UNIVERSIDAD': 'pink',
+                                'ORIENTE': '#96B6C5',
+                                'PONIENTE': '#ADC4CE',
+                                'CENTRO': '#EEE0C9',
+                                'RIVERAS': '#FFDDCC',
+                                'VALLE': '#FFDDCC',
+                                'SUR': '#FFCCCC',
+                                'UNIVERSIDAD': '#FEBBCC',
                             },
-                            mapbox_style="open-street-map",
+                            mapbox_style='open-street-map',
                             zoom=10.5,
                             center={"lat": 31.65, "lon": -106.48333},    
-                            opacity=0.3,
+                            opacity=0.5,
                             height=600,
                             )
     
     for sector in sectores:
         data_graph.get_sectores(fig, sector)
-
-
-    df = pd.read_csv('data_group/locations.csv')
-    mask = (df['descripcion'].isin(sectores)) & (df['id_Grupo'].isin([delito]))
-    df = df[mask]
     
-    fig.add_trace(
-    go.Scattermapbox(
-        lat=df['y'],
-        lon=df['x'],
-        mode='markers',
-        marker=go.scattermapbox.Marker(
-            size=6,
-            opacity=0.5,
-            color=df['color']
-        ),
-        name=delito
-        # showlegend=False
-        )
-    )
-    
+    for item in aux:
+        data_graph.get_calles(fig, item, sectores)        
+        
     fig.update_layout(
+        title='Incidencia delictiva en '+str(sectores),
         autosize=True,
         margin={"r":0,"t":0,"l":0,"b":0},
-        title_text=delito+' EN '+str(age),
     )
     
     return fig
