@@ -1,23 +1,54 @@
-from dash import Dash, callback, Output, Input
+from dash import Dash, callback, Output, Input, State
+from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 import plotly.io as pio
 from plotly import express as px
-import plotly.graph_objs as go
+from dash import html
 
 import layout
 import utils.data as data
 import utils.data_graph as data_graph
 
 import pandas as pd
+import base64
+import io
+import sqlite3
 
 TEMPLATE = "seaborn"
 
 pio.templates.default = TEMPLATE
 
 external_stylesheets = [dbc.themes.BOOTSTRAP]
+
 app = Dash(__name__, external_stylesheets=external_stylesheets)
 app.layout = layout.layout
 
+# Document
+@callback(
+    Output('output-data-upload', 'children'),
+    Input('upload-data', 'contents'),
+    State('upload-data', 'filename')
+)
+def subir_archivo(contents, filename):
+    if contents is not None:
+        content_type, content_string = contents.split(',')
+        decoded = base64.b64decode(content_string)
+        try:
+            if 'csv' in filename:
+                df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+                df = data.limpiar_data_incidentes(df)
+                data.get_points_from_incidentes(df)
+                locations = pd.read_csv('data_group/locations.csv')
+                
+        except Exception as e:
+            print(e)
+            return html.Div(['Hubo un error procesando este archivo.'])
+        
+        connection = sqlite3.connect('Estadisticas.db')
+        locations.to_sql('Incidentes', connection, if_exists='replace', index=False)
+        return html.Div(['Archivo subido exitosamente.'])
+    else:
+        raise PreventUpdate
 
 # Tab 1
 @callback(
@@ -25,14 +56,13 @@ app.layout = layout.layout
     Input('age_tab1', 'value')
 )
 def graph_age(age):
-    df = data.convinar_dataframes(age)
+    df = data.get_data_incidentes()
     df_group = data.incidencia_delictiva(df)
     mask = df_group['anio'].isin(age)
     df_group = df_group[mask]
     df_group = data.rellenar_meses_faltantes(df_group, age)
     df_group = data.remplazar_meses(df_group)
     
-    # import pdb; pdb.set_trace()
     fig = px.line(df_group, x="mes", y="count", 
                   color='anio',text='count', markers=True,
                   labels={'count': 'Incidencia delictiva',
@@ -51,7 +81,7 @@ def graph_age(age):
     Input('delito_tab1-1', 'value')
 )
 def graph_delito(age, delito):
-    df = data.convinar_dataframes(age)
+    df = data.get_data_incidentes()
     df_group = data.incidencia_delictiva(df, ['mes', 'anio', 'id_Grupo'])
     mask = (df_group['anio'].isin(age) & df_group['id_Grupo'].isin([delito]))
     df_group = df_group[mask]
@@ -79,7 +109,7 @@ def graph_delito(age, delito):
     Input('delito_tab2', 'value')
 )
 def graph_distrito(age, distrito, delito):
-    df = data.convinar_dataframes(age)
+    df = data.get_data_incidentes()
     df_group = data.incidencia_delictiva(df, ['descripcion', 'id_Grupo', 'anio', 'mes'])
     mask = (df_group['anio'].isin(age) & df_group['descripcion'].isin([distrito]) & df_group['id_Grupo'].isin([delito]))
     df_group = df_group[mask]
@@ -113,7 +143,7 @@ def graph_mes(anio, delito, mes):
         11: 'NOVIEMBRE', 12: 'DICIEMBRE'
     }
     
-    df = data.convinar_dataframes(anio)
+    df = data.get_data_incidentes()
     mask = (df['anio'].isin(anio)) & (df['id_Grupo'].isin([delito])) & (df['mes'].isin([mes]))
     grupo_df = df[mask]
     grupo_df = data.agregar_divisiones(grupo_df, anio)
@@ -127,11 +157,11 @@ def graph_mes(anio, delito, mes):
 # Tab 3
 @callback(
     Output('graph_tab3', 'figure'),
-    Input('age_tab3', 'value'),
     Input('sectores_tab3', 'value'),
-    Input('delito_tab3', 'value')
+    Input('delito_tab3', 'value'),
+    Input('limites-sector', 'value')
 )
-def graph_map(age, sectores, delito):    
+def graph_map(sectores, delito, limites_sector):    
     distritos_df = data_graph.get_distritos()
     
     if delito is str:
@@ -158,12 +188,14 @@ def graph_map(age, sectores, delito):
                             opacity=0.5,
                             height=600,
                             )
-    
-    for sector in sectores:
-        data_graph.get_sectores(fig, sector)
+    if limites_sector != None:
+        for sector in sectores:
+            data_graph.get_sectores(fig, sector)
+
     
     for item in aux:
         data_graph.get_calles(fig, item, sectores)        
+    
         
     fig.update_layout(
         title='Incidencia delictiva en '+str(sectores),
@@ -172,6 +204,23 @@ def graph_map(age, sectores, delito):
     )
     
     return fig
+
+
+@callback(
+    Output('table_tab3', 'data'),
+    Input('table_tab3', 'page_current'),
+    Input('table_tab3', 'page_size'),
+    Input('delito_tab3', 'value')
+)
+def update_table(page_current, page_size, delitos):
+    df = data_graph.get_info_delito(delitos)
+    df['index'] = range(1, len(df) + 1)
+    df = df.sort_values(by='id_Grupo')
+    
+    return df.to_dict('records')
+    # return df.iloc[
+    #     page_current*page_size:(page_current+ 1)*page_size
+    # ].to_dict('records')
 
 
 if __name__ == '__main__':

@@ -153,6 +153,6 @@ dmypy.json
 cython_debug/
 
 # Projecto
-DISTRITOS/
-pruebas/
+# DISTRITOS/
+# pruebas/
 *.ipynb

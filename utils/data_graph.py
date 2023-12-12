@@ -1,7 +1,7 @@
 import pandas as pd
 import geopandas as gpd
 import plotly.graph_objs as go
-import plotly.express as px
+import plotly.figure_factory as ff
 
 def get_distritos():
     df = gpd.read_file('./distritos.geojson')
@@ -67,4 +67,26 @@ def get_calles(fig, delito, sectores):
             name=delito,
         )
     )
+
+def get_heatmap(fig, delito, sectores):
+    df = pd.read_csv('data_group/locations.csv')
+    mask = (df['id_Grupo'].isin([delito])) & (df['descripcion'].isin(sectores))
+    df = df[mask]
     
+    heatmap = go.Densitymapbox(
+        lat=df['y'],
+        lon=df['x'],
+        # z=df['counts'],
+        z=[1]*len(df),
+        radius=10,
+        colorscale='Viridis',
+        showscale=False,
+        hovertemplate=delito,
+        name=delito,
+    )
+    fig.add_trace(heatmap)
+
+def get_info_delito(delitos):
+    df = pd.read_csv('./data_group/locations.csv')
+    mask = df['id_Grupo'].isin(delitos)
+    return df[mask].groupby(['descripcion', 'id_Grupo']).size().reset_index(name='counts')

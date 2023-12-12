@@ -1,16 +1,35 @@
 from dash import html, dcc
+from dash import dash_table
 import dash_bootstrap_components as dbc
-
 import datetime
-import os
 
 import utils.data as data
 
-df = data.convinar_dataframes([2022,2023])
+df = data.get_data_incidentes()
 now = datetime.datetime.now()
 
-age = [x for x in os.listdir('./data/')]
-age = [int(x.replace('.csv', '')) for x in age]
+age = df['anio'].unique()
+
+tab_document = dbc.Card([
+    dcc.Upload(
+        id='upload-data',
+        children=html.Div([
+            'Drag and Drop or ',
+            html.A('Select Files')
+        ]),
+        style={
+            'width': '100%',
+            'height': '60px',
+            'lineHeight': '60px',
+            'borderWidth': '1px',
+            'borderStyle': 'dashed',
+            'borderRadius': '5px',
+            'textAlign': 'center',
+            'margin': '10px'
+        },
+    ),
+    html.Div(id='output-data-upload'),
+])
 
 tab1_content = dbc.Card([
     dbc.Row([
@@ -21,7 +40,7 @@ tab1_content = dbc.Card([
                 dcc.Checklist(
                     id='age_tab1',
                     options=age,
-                    value=[now.year, now.year-1],
+                    value=[],
                     inline=True,
                     labelStyle={'display': 'inline-block'},
                     className='list-group-item'
@@ -42,7 +61,7 @@ tab1_content = dbc.Card([
             dcc.Checklist(
                 id='age_tab1-1',
                 options=age,
-                value=[now.year-1,now.year],
+                value=[],
                 inline=True,
                 labelStyle={'display': 'inline-block'}
             ),
@@ -65,7 +84,7 @@ tab2_content = dbc.Card([
                 dcc.Checklist(
                     id='age_tab2',
                     options=age,
-                    value=[now.year, now.year-1],
+                    value=[],
                     inline=True,
                     labelStyle={'display': 'inline-block'}
                 ),
@@ -93,7 +112,7 @@ tab2_content = dbc.Card([
                 dcc.Checklist(
                     id='age_tab2-2',
                     options=age,
-                    value=[now.year, now.year-1],
+                    value=[],
                     inline=True,
                     labelStyle={'display': 'inline-block'}
                 ),
@@ -117,31 +136,37 @@ tab2_content = dbc.Card([
 
 distritos = ['CENTRO', 'UNIVERSIDAD', 'ORIENTE', 'VALLE', 'PONIENTE', 'SUR', 'RIVERAS']
 
+
 tab3_content = dbc.Card([
     dbc.CardBody([
         html.H3('Mapas', className='card-title'),
-        dcc.RadioItems(
-            id='age_tab3',
-            options=age,
-            value=now.year,
-            inline=True,
-            labelStyle={'display': 'inline-block'}
+        dcc.Checklist(
+            id='limites-sector',
+            options=['Mostrar limites de sectores'],
         ),
-        
+                
         dcc.Dropdown(
             id='delito_tab3',
             options=df['id_Grupo'].unique(),
-            value='',
+            value=[''],
             multi=True
         ),
         
-        dcc.Dropdown(
+        dcc.Checklist(
             id='sectores_tab3',
             options=distritos,
             value=['SUR'],
-            multi=True
+            inline=True,
         ),
+        
+
         dcc.Graph(id='graph_tab3'),
+        
+        dash_table.DataTable(
+            id='table_tab3',
+            columns=[{'name': i, 'id': i} for i in ['descripcion', 'id_Grupo', 'counts']],
+            page_action='custom',
+        )
         
     ])
 ], class_name='card')
@@ -149,6 +174,7 @@ tab3_content = dbc.Card([
 layout = dbc.Container([
     # Tabs
     dbc.Tabs([
+        dbc.Tab(tab_document, label='Documentos', tab_id='tab-0'),
         dbc.Tab(tab1_content , label='Incidencia delictiva por año', tab_id='tab-1'),
         dbc.Tab(tab2_content, label='Incidencia delictiva por distrito', tab_id='tab-2'),
         dbc.Tab(tab3_content, label='Mapas', tab_id='tab-3'),
